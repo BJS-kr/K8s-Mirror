@@ -1,0 +1,38 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
+reclaimPolicy: Retain # default value is Delete
+allowVolumeExpansion: true
+mountOptions:
+  - rw # default
+volumeBindingMode: WaitForFirstConsumer
+
+---
+# no-provisioner 이므로 PV 생성
+# PV에서 nodeAffinity는 local외에는 거의 사용될 일이 없다. dynamic provisioning이 안되기 때문
+# https://kubernetes.io/docs/concepts/storage/volumes/#local
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: account-service-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOncePod
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /mnt/disks/vol1 # 타겟 노드안에 디렉토리 생성해놔야 함. docker desktop으로 cluster를 구성했기 때문에, docker exec으로 접속함. wsl2 터미널에서는 docker exec이 안되고, powershell등에서 실행해야함
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - desktop-worker
