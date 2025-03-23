@@ -23,13 +23,6 @@ type ChangeBalance struct {
 	Amount    int   `json:"amount"`
 }
 
-func jsonBody[T any](r *http.Request, target T) (T, error) {
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(target)
-
-	return target, err
-}
-
 type AccountHandler struct {
 	accountRepo            *AccountRepo
 	currencyStockConnector connector.CurrencyStockConnector
@@ -181,4 +174,11 @@ func runInTx(ctx context.Context, conn *sql.DB, fns []Nullary) error {
 	}
 
 	return tx.Commit()
+}
+
+func jsonBody[T any](r *http.Request, target T) (T, error) {
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(target)
+
+	return target, err
 }
