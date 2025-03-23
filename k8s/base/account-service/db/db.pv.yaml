@@ -1,15 +1,3 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
-reclaimPolicy: Retain # default value is Delete
-allowVolumeExpansion: true
-mountOptions:
-  - rw # default
-volumeBindingMode: WaitForFirstConsumer
-
----
 # no-provisioner 이므로 PV 생성
 # PV에서 nodeAffinity는 local외에는 거의 사용될 일이 없다. dynamic provisioning이 안되기 때문
 # https://kubernetes.io/docs/concepts/storage/volumes/#local
