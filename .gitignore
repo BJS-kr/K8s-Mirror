@@ -1,1 +1,3 @@
 cp.kube.conf.sh
+buildpush.sh
+.env
