@@ -32,7 +32,7 @@ func main() {
 	apiMux := http.NewServeMux()
 	accountMux := account.NewAccountMux(accountHandler)
 
-	apiMux.Handle("/api", http.StripPrefix("/api", accountMux))
+	apiMux.Handle("/api/", http.StripPrefix("/api", accountMux))
 
 	http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), apiMux)
 }
