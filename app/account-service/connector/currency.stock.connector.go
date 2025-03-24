@@ -4,6 +4,7 @@ import (
 	"accountservice/currency"
 	"context"
 	"log"
+	"net/url"
 	"os"
 )
 
@@ -14,6 +15,7 @@ type CurrencyStockConnector interface {
 
 type CurrencyStock struct {
 	serviceAddr string
+	url         *url.URL
 }
 
 func NewCurrencyStock() *CurrencyStock {
@@ -23,7 +25,16 @@ func NewCurrencyStock() *CurrencyStock {
 		log.Fatal("CURRENCY_STOCK_SERVICE_ADDR is not set")
 	}
 
-	return &CurrencyStock{serviceAddr: currencyStockServiceAddr}
+	currencyStock := &CurrencyStock{serviceAddr: currencyStockServiceAddr}
+	currencyStockSvcUrl, err := url.Parse(currencyStockServiceAddr)
+
+	if err != nil {
+		log.Fatal("CURRENCY_STOCK_SERVICE_ADDR is invalid address")
+	}
+
+	currencyStock.url = currencyStockSvcUrl
+
+	return currencyStock
 }
 
 func (c *CurrencyStock) RequestCurrency(ctx context.Context, currency currency.Currency, amount int) error {
