@@ -34,6 +34,6 @@ func main() {
 
 	apiMux.Handle("/api/", http.StripPrefix("/api", accountMux))
 
-	http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), apiMux)
 	log.Println("Account service started on port " + os.Getenv("HTTP_PORT"))
+	http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), apiMux)
 }

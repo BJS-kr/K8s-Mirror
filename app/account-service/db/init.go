@@ -2,16 +2,17 @@ package db
 
 import (
 	"database/sql"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
 
 func Init(conn *sql.DB) error {
 	_, err := conn.Exec(`
-	CREATE DATABASE IF NOT EXISTS account_service
+	CREATE DATABASE account_service
 	`)
 
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		return err
 	}
 
