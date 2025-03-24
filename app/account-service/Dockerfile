@@ -4,12 +4,14 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build -o main main.go
+RUN go build -o account_service
 
-FROM alpine:latest
+# alpine으로 했을 때 libc.so.6가 없음. 설치 과정을 거치는 것보다 busybox로
+FROM busybox
 
-WORKDIR /
+WORKDIR /app
 
-COPY --from=builder /app/main .
+COPY ./.env .
+COPY --from=builder /app/account_service .
 
-CMD ["./main"]
+CMD ["./account_service"]
