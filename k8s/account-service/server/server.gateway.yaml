@@ -1,0 +1,36 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: account-service-gateway
+  labels:
+    app: account-service
+    role: gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    # hostname: "*"
+---
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: account-service-http
+  labels:
+    app: account-service
+spec:
+  parentRefs:
+  - name: account-service-gateway
+    sectionName: http
+  # hostnames:
+  # - "*"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: / # 나중에 /api로 바꾸자. 일단 /health로 연결 테스트 하기 위함
+    backendRefs:
+    - name: account-service-svc
+      port: 8080
