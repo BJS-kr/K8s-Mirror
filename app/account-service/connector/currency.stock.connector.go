@@ -8,39 +8,38 @@ import (
 	"os"
 )
 
-type CurrencyStockConnector interface {
-	RequestCurrency(ctx context.Context, currency currency.Currency, amount int) error
-	ReturnCurrency(ctx context.Context, currency currency.Currency, amount int) error
+type LoanServiceConnector interface {
+	RequestLoan(ctx context.Context, currency currency.Currency, amount int) error
+	ReturnLoan(ctx context.Context, currency currency.Currency, amount int) error
 }
 
-type CurrencyStock struct {
-	serviceAddr string
-	url         *url.URL
+type LoanService struct {
+	url *url.URL
 }
 
-func NewCurrencyStock() *CurrencyStock {
-	currencyStockServiceAddr := os.Getenv("CURRENCY_STOCK_SERVICE_ADDR")
+func NewLoanServiceConnector() *LoanService {
+	loanServiceAddr := os.Getenv("LOAN_SERVICE_ADDR")
 
-	if currencyStockServiceAddr == "" {
-		log.Fatal("CURRENCY_STOCK_SERVICE_ADDR is not set")
+	if loanServiceAddr == "" {
+		log.Fatal("LOAN_SERVICE_ADDR is not set")
 	}
 
-	currencyStock := &CurrencyStock{serviceAddr: currencyStockServiceAddr}
-	currencyStockSvcUrl, err := url.Parse(currencyStockServiceAddr)
+	loanService := new(LoanService)
+	loanServiceUrl, err := url.Parse(loanServiceAddr)
 
 	if err != nil {
-		log.Fatal("CURRENCY_STOCK_SERVICE_ADDR is invalid address")
+		log.Fatal("LOAN_SERVICE_ADDR is invalid address")
 	}
 
-	currencyStock.url = currencyStockSvcUrl
+	loanService.url = loanServiceUrl
 
-	return currencyStock
+	return loanService
 }
 
-func (c *CurrencyStock) RequestCurrency(ctx context.Context, currency currency.Currency, amount int) error {
+func (l *LoanService) RequestLoan(ctx context.Context, currency currency.Currency, amount int) error {
 	return nil
 }
 
-func (c *CurrencyStock) ReturnCurrency(ctx context.Context, currency currency.Currency, amount int) error {
+func (*LoanService) ReturnLoan(ctx context.Context, currency currency.Currency, amount int) error {
 	return nil
 }

@@ -20,11 +20,11 @@ import (
 
 const path = "/account/"
 
-type MockCurrencyStockConnector struct {
+type MockLoanServiceConnector struct {
 	errorFlag bool
 }
 
-func (c *MockCurrencyStockConnector) RequestCurrency(ctx context.Context, currency currency.Currency, amount int) error {
+func (c *MockLoanServiceConnector) RequestLoan(ctx context.Context, currency currency.Currency, amount int) error {
 	if c.errorFlag {
 		return errors.New("error")
 	}
@@ -32,7 +32,7 @@ func (c *MockCurrencyStockConnector) RequestCurrency(ctx context.Context, curren
 	return nil
 }
 
-func (c *MockCurrencyStockConnector) ReturnCurrency(ctx context.Context, currency currency.Currency, amount int) error {
+func (c *MockLoanServiceConnector) ReturnLoan(ctx context.Context, currency currency.Currency, amount int) error {
 	if c.errorFlag {
 		return errors.New("error")
 	}
@@ -40,7 +40,7 @@ func (c *MockCurrencyStockConnector) ReturnCurrency(ctx context.Context, currenc
 	return nil
 }
 
-func NewTestComponents() (*sql.DB, sqlmock.Sqlmock, *http.ServeMux, *MockCurrencyStockConnector) {
+func NewTestComponents() (*sql.DB, sqlmock.Sqlmock, *http.ServeMux, *MockLoanServiceConnector) {
 	db, mock, err := sqlmock.New()
 
 	if err != nil {
@@ -48,7 +48,7 @@ func NewTestComponents() (*sql.DB, sqlmock.Sqlmock, *http.ServeMux, *MockCurrenc
 	}
 
 	accountRepo := account.NewAccountRepo(db)
-	mockConnector := &MockCurrencyStockConnector{errorFlag: false}
+	mockConnector := &MockLoanServiceConnector{errorFlag: false}
 	accountHandler := account.NewAccountHandler(accountRepo, mockConnector)
 	accountMux := account.NewAccountMux(accountHandler)
 

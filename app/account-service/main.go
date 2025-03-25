@@ -26,14 +26,17 @@ func main() {
 	}
 
 	accountRepo := account.NewAccountRepo(conn)
-	currencyStockConnector := connector.NewCurrencyStock()
-	accountHandler := account.NewAccountHandler(accountRepo, currencyStockConnector)
+	loanServiceConnector := connector.NewLoanServiceConnector()
+	accountHandler := account.NewAccountHandler(accountRepo, loanServiceConnector)
 
-	apiMux := http.NewServeMux()
+	appMux := http.NewServeMux()
 	accountMux := account.NewAccountMux(accountHandler)
 
-	apiMux.Handle("/api/", http.StripPrefix("/api", accountMux))
+	appMux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	appMux.Handle("/api/", http.StripPrefix("/api", accountMux))
 
 	log.Println("Account service started on port " + os.Getenv("HTTP_PORT"))
-	http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), apiMux)
+	http.ListenAndServe(":"+os.Getenv("HTTP_PORT"), appMux)
 }

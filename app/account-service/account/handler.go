@@ -24,14 +24,14 @@ type ChangeBalance struct {
 }
 
 type AccountHandler struct {
-	accountRepo            *AccountRepo
-	currencyStockConnector connector.CurrencyStockConnector
+	accountRepo          *AccountRepo
+	loanServiceConnector connector.LoanServiceConnector
 }
 
-func NewAccountHandler(accountRepo *AccountRepo, currencyStockConnector connector.CurrencyStockConnector) *AccountHandler {
+func NewAccountHandler(accountRepo *AccountRepo, loanServiceConnector connector.LoanServiceConnector) *AccountHandler {
 	return &AccountHandler{
-		accountRepo:            accountRepo,
-		currencyStockConnector: currencyStockConnector,
+		accountRepo:          accountRepo,
+		loanServiceConnector: loanServiceConnector,
 	}
 }
 
@@ -93,9 +93,9 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 		},
 		func() error {
 			if changeBalance.Amount < 0 {
-				return h.currencyStockConnector.ReturnCurrency(ctx, currency, changeBalance.Amount)
+				return h.loanServiceConnector.ReturnLoan(ctx, currency, changeBalance.Amount)
 			} else {
-				return h.currencyStockConnector.RequestCurrency(ctx, currency, changeBalance.Amount)
+				return h.loanServiceConnector.RequestLoan(ctx, currency, changeBalance.Amount)
 			}
 		},
 	}
