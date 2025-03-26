@@ -13,7 +13,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"accountservice/account"
-	"accountservice/currency"
+
 	"accountservice/db"
 
 	_ "github.com/lib/pq"
@@ -76,63 +76,30 @@ func TestRepoCreateAccount(t *testing.T) {
 	if accountId != 1 {
 		t.Fatalf("expected account id is 1. actual: %d", accountId)
 	}
-
-	rows, err := conn.Query("SELECT * FROM balances WHERE account_id = $1", accountId)
-
-	if err != nil {
-		t.Fatal("invalid test query")
-	}
-
-	var (
-		currency uint8
-		balance  int
-	)
-
-	count := 0
-	for rows.Next() {
-		rows.Scan(accountId, currency, balance)
-		t.Log(accountId, currency, balance)
-
-		if accountId != 1 {
-			t.Fatal("unexpected account_id")
-		}
-
-		t.Log("inserted currency type:", currency)
-
-		if balance != 0 {
-			t.Fatal("initial balance must be 0")
-		}
-
-		count++
-	}
-
-	if count != 3 {
-		t.Fatalf("result rows must be 3, which is equal to count of currency types. actual: %d", count)
-	}
 }
 
 func TestRepoChangeBalance(t *testing.T) {
 	ctx := context.Background()
-	err := accountRepo.ChangeBalance(ctx, 1, currency.WON, 100_000)
+	err := accountRepo.ChangeBalance(ctx, 1, "WON", 100_000)
 
 	if err != nil {
-		t.Fatal("deposit balance should success")
+		t.Fatalf("deposit balance should success: %s ", err.Error())
 	}
 
-	err = accountRepo.ChangeBalance(ctx, 1, currency.WON, -1_000_000)
+	err = accountRepo.ChangeBalance(ctx, 1, "WON", -1_000_000)
 
 	if err == nil || err.Error() != "insufficient balance" {
 		log.Println(err)
 		t.Fatal("withdrawal of exceeding balance should fail with message 'insufficient balance'")
 	}
 
-	err = accountRepo.ChangeBalance(ctx, 1, currency.USD, -5_000)
+	err = accountRepo.ChangeBalance(ctx, 1, "USD", -5_000)
 
 	if err == nil || err.Error() != "insufficient balance" {
 		t.Fatal("withdrawal of exceeding balance of other currency should fail with message 'insufficient balance'")
 	}
 
-	err = accountRepo.ChangeBalance(ctx, 1, currency.WON, -50_000)
+	err = accountRepo.ChangeBalance(ctx, 1, "WON", -50_000)
 
 	if err != nil {
 		t.Fatal("withdrawal of sufficient amount should success")
@@ -140,15 +107,11 @@ func TestRepoChangeBalance(t *testing.T) {
 }
 
 func TestRepoGetBalance(t *testing.T) {
-	var balance int
-	row, err := conn.Query("SELECT balance FROM balances WHERE account_id = $1 AND currency = $2", 1, currency.WON)
+	balance, err := accountRepo.GetBalance(context.Background(), 1, "WON")
 
 	if err != nil {
-		t.Fatal("invalid test query")
+		t.Fatal(err)
 	}
-
-	row.Next()
-	row.Scan(&balance)
 
 	if balance != 50_000 {
 		t.Fatalf("unexpected remaining balance. actual: %d", balance)

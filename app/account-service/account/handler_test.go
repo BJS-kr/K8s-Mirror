@@ -2,12 +2,12 @@ package account_test
 
 import (
 	"accountservice/account"
-	"accountservice/currency"
+	"accountservice/connector"
+
 	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -24,17 +24,17 @@ type MockLoanServiceConnector struct {
 	errorFlag bool
 }
 
-func (c *MockLoanServiceConnector) RequestLoan(ctx context.Context, currency currency.Currency, amount int) error {
+func (c *MockLoanServiceConnector) RequestLoan(ctx context.Context, currency string, amount int) error {
 	if c.errorFlag {
-		return errors.New("error")
+		return connector.ErrRequestLoanDenied
 	}
 
 	return nil
 }
 
-func (c *MockLoanServiceConnector) ReturnLoan(ctx context.Context, currency currency.Currency, amount int) error {
+func (c *MockLoanServiceConnector) ReturnLoan(ctx context.Context, currency string, amount int) error {
 	if c.errorFlag {
-		return errors.New("error")
+		return connector.ErrReturnLoanDenied
 	}
 
 	return nil
@@ -70,10 +70,7 @@ func TestCreateAccount(t *testing.T) {
 		t.Fatalf("failed to marshal create account: %v", err)
 	}
 
-	dbMock.ExpectBegin()
 	dbMock.ExpectQuery("INSERT INTO accounts").WithArgs(createAccount.AccountName).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	dbMock.ExpectExec("INSERT INTO balances").WithArgs(1, currency.USD, currency.WON, currency.YEN, 0).WillReturnResult(sqlmock.NewResult(3, 3))
-	dbMock.ExpectCommit()
 
 	resp := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
@@ -93,7 +90,7 @@ func TestCreateAccount(t *testing.T) {
 	}
 
 	if err = dbMock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations were not met: %v", err)
+		t.Fatal(err)
 	}
 }
 
@@ -104,7 +101,7 @@ func TestChangeBalanceShouldSuccess(t *testing.T) {
 
 	changeBalance := account.ChangeBalance{
 		AccountId: 1,
-		Currency:  uint8(currency.USD),
+		Currency:  "USD",
 		Amount:    100,
 	}
 
@@ -115,7 +112,8 @@ func TestChangeBalanceShouldSuccess(t *testing.T) {
 	}
 
 	dbMock.ExpectBegin()
-	dbMock.ExpectExec("UPDATE balances").WithArgs(changeBalance.Amount, changeBalance.AccountId, changeBalance.Currency).WillReturnResult(sqlmock.NewResult(1, 1))
+	dbMock.ExpectQuery("SELECT id FROM currencies").WithArgs("USD").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	dbMock.ExpectExec("INSERT INTO balances").WithArgs(1, 1, 100).WillReturnResult(sqlmock.NewResult(1, 1))
 	dbMock.ExpectCommit()
 
 	resp := httptest.NewRecorder()
@@ -129,9 +127,8 @@ func TestChangeBalanceShouldSuccess(t *testing.T) {
 	}
 
 	if err = dbMock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations were not met: %v", err)
+		t.Fatal(err)
 	}
-
 }
 
 func TestChangeBalanceShouldFail(t *testing.T) {
@@ -142,7 +139,7 @@ func TestChangeBalanceShouldFail(t *testing.T) {
 
 	changeBalance := account.ChangeBalance{
 		AccountId: 1,
-		Currency:  uint8(currency.USD),
+		Currency:  "USD",
 		Amount:    100,
 	}
 
@@ -153,7 +150,8 @@ func TestChangeBalanceShouldFail(t *testing.T) {
 	}
 
 	dbMock.ExpectBegin()
-	dbMock.ExpectExec("UPDATE balances").WithArgs(changeBalance.Amount, changeBalance.AccountId, changeBalance.Currency).WillReturnError(errors.New("error"))
+	dbMock.ExpectQuery("SELECT id FROM currencies").WithArgs("USD").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	dbMock.ExpectExec("INSERT INTO balances").WithArgs(1, 1, 100)
 	dbMock.ExpectRollback()
 
 	resp := httptest.NewRecorder()
@@ -162,13 +160,14 @@ func TestChangeBalanceShouldFail(t *testing.T) {
 	accountMux.ServeHTTP(resp, req)
 	result := resp.Result()
 
-	if result.StatusCode != http.StatusInternalServerError {
+	if result.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, result.StatusCode)
 	}
 
 	if err = dbMock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("expectations were not met: %v", err)
+		t.Fatal(err)
 	}
+
 }
 
 func TestGetBalanceShouldSuccess(t *testing.T) {
@@ -176,10 +175,11 @@ func TestGetBalanceShouldSuccess(t *testing.T) {
 
 	defer db.Close()
 
-	dbMock.ExpectQuery("SELECT balance FROM balances").WithArgs(1, currency.USD).WillReturnRows(sqlmock.NewRows([]string{"balance"}).AddRow(100))
+	dbMock.ExpectQuery("SELECT id FROM currencies").WithArgs("USD").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	dbMock.ExpectQuery("SELECT balance FROM balances").WithArgs(1, 1).WillReturnRows(sqlmock.NewRows([]string{"balance"}).AddRow(100))
 
 	resp := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s%d/%d", path, 1, currency.USD), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s%d/%s", path, 1, "USD"), nil)
 
 	accountMux.ServeHTTP(resp, req)
 	result := resp.Result()
@@ -187,21 +187,31 @@ func TestGetBalanceShouldSuccess(t *testing.T) {
 	if result.StatusCode != http.StatusOK {
 		t.Errorf("expected status code %d, got %d", http.StatusOK, result.StatusCode)
 	}
+
+	if err := dbMock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestGetBalanceShouldFail(t *testing.T) {
-	db, _, accountMux, _ := NewTestComponents()
+	db, dbMock, accountMux, _ := NewTestComponents()
 
 	defer db.Close()
 
+	dbMock.ExpectQuery("SELECT id FROM currencies").WithArgs("ZWL").WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
 	resp := httptest.NewRecorder()
 	// request with invalid currency
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s%d/%d", path, 1, 10), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s%d/%s", path, 1, "ZWL"), nil)
 
 	accountMux.ServeHTTP(resp, req)
 	result := resp.Result()
 
 	if result.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, result.StatusCode)
+	}
+
+	if err := dbMock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }

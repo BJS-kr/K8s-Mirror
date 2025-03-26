@@ -2,7 +2,8 @@ package account
 
 import (
 	"accountservice/connector"
-	"accountservice/currency"
+	"errors"
+
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -18,9 +19,9 @@ type CreateAccount struct {
 }
 
 type ChangeBalance struct {
-	AccountId int   `json:"accountId"`
-	Currency  uint8 `json:"currency"`
-	Amount    int   `json:"amount"`
+	AccountId int    `json:"accountId"`
+	Currency  string `json:"currency"`
+	Amount    int    `json:"amount"`
 }
 
 type AccountHandler struct {
@@ -75,13 +76,6 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 
-	currency, err := currency.AsValidCurrency(changeBalance.Currency)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	if changeBalance.Amount == 0 {
 		http.Error(w, "Amount must be non-zero", http.StatusBadRequest)
 		return
@@ -89,13 +83,13 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 
 	boundTasks := []Nullary{
 		func() error {
-			return h.accountRepo.ChangeBalance(ctx, changeBalance.AccountId, currency, changeBalance.Amount)
+			return h.accountRepo.ChangeBalance(ctx, changeBalance.AccountId, changeBalance.Currency, changeBalance.Amount)
 		},
 		func() error {
 			if changeBalance.Amount < 0 {
-				return h.loanServiceConnector.ReturnLoan(ctx, currency, changeBalance.Amount)
+				return h.loanServiceConnector.ReturnLoan(ctx, changeBalance.Currency, changeBalance.Amount)
 			} else {
-				return h.loanServiceConnector.RequestLoan(ctx, currency, changeBalance.Amount)
+				return h.loanServiceConnector.RequestLoan(ctx, changeBalance.Currency, changeBalance.Amount)
 			}
 		},
 	}
@@ -103,7 +97,12 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 	err = runInTx(ctx, h.accountRepo.conn, boundTasks)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if errors.Is(err, connector.ErrRequestLoanDenied) || errors.Is(err, connector.ErrReturnLoanDenied) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -111,7 +110,7 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AccountHandler) getBalance(w http.ResponseWriter, r *http.Request) {
-	accountIdStr, currencyStr := r.PathValue("accountId"), r.PathValue("currency")
+	accountIdStr, currency := r.PathValue("accountId"), r.PathValue("currency")
 
 	if accountIdStr == "" {
 		http.Error(w, "Account id is required", http.StatusBadRequest)
@@ -128,23 +127,14 @@ func (h *AccountHandler) getBalance(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 
-	currencyInt, err := strconv.Atoi(currencyStr)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	currency, err := currency.AsValidCurrency(uint8(currencyInt))
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	balance, err := h.accountRepo.GetBalance(ctx, accountId, currency)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

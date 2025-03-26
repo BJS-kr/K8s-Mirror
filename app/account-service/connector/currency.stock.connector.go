@@ -1,16 +1,21 @@
 package connector
 
 import (
-	"accountservice/currency"
 	"context"
+	"errors"
 	"log"
 	"net/url"
 	"os"
 )
 
+var (
+	ErrRequestLoanDenied error = errors.New("request loan denied")
+	ErrReturnLoanDenied  error = errors.New("return loan denied")
+)
+
 type LoanServiceConnector interface {
-	RequestLoan(ctx context.Context, currency currency.Currency, amount int) error
-	ReturnLoan(ctx context.Context, currency currency.Currency, amount int) error
+	RequestLoan(ctx context.Context, currency string, amount int) error
+	ReturnLoan(ctx context.Context, currency string, amount int) error
 }
 
 type LoanService struct {
@@ -36,10 +41,10 @@ func NewLoanServiceConnector() *LoanService {
 	return loanService
 }
 
-func (l *LoanService) RequestLoan(ctx context.Context, currency currency.Currency, amount int) error {
+func (l *LoanService) RequestLoan(ctx context.Context, currency string, amount int) error {
 	return nil
 }
 
-func (*LoanService) ReturnLoan(ctx context.Context, currency currency.Currency, amount int) error {
+func (*LoanService) ReturnLoan(ctx context.Context, currency string, amount int) error {
 	return nil
 }
