@@ -17,11 +17,13 @@ func NewAccountRepo(conn *sql.DB) *AccountRepo {
 	return &AccountRepo{conn: conn}
 }
 
-func (r *AccountRepo) CreateAccount(ctx context.Context, accountName string) (accountId int, err error) {
+func (r *AccountRepo) CreateAccount(ctx context.Context, accountName string) (int, error) {
+	var accountId int
+
 	tx, err := r.conn.Begin()
 	if err != nil {
 
-		return
+		return accountId, err
 	}
 
 	defer func() {
@@ -35,21 +37,27 @@ func (r *AccountRepo) CreateAccount(ctx context.Context, accountName string) (ac
 	err = tx.QueryRowContext(ctx, "INSERT INTO accounts (name) VALUES ($1) RETURNING id", accountName).Scan(&accountId)
 
 	if err != nil {
-		return
+		return accountId, err
 	}
 
-	_, err = tx.ExecContext(ctx, `
-	INSERT INTO balances (account_id, currency, balance) VALUES ($1, $2, $5);
-	INSERT INTO balances (account_id, currency, balance) VALUES ($1, $3, $5);
-	INSERT INTO balances (account_id, currency, balance) VALUES ($1, $4, $5);
-	`, accountId, currency.USD, currency.WON, currency.YEN, 0)
+	for _, cur := range [3]currency.Currency{currency.USD, currency.YEN, currency.WON} {
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO balances (account_id, currency, balance) VALUES ($1, $2, $3);
+		`, accountId, cur, 0)
 
-	return
+		if err != nil {
+			return accountId, err
+		}
+	}
+
+	return accountId, err
 }
 
 func (r *AccountRepo) ChangeBalance(ctx context.Context, accountId int, currency currency.Currency, amount int) error {
 	if amount < 0 {
+		amount = -amount
 		result, err := r.conn.ExecContext(ctx, "UPDATE balances SET balance = balance - $1 WHERE account_id = $2 AND currency = $3 AND balance >= $1", amount, accountId, currency)
+
 		if err != nil {
 			return err
 		}

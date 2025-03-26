@@ -14,8 +14,7 @@ import (
 
 func main() {
 	godotenv.Load()
-
-	conn := db.NewConn()
+	conn := db.NewConn(db.MakeConnString())
 
 	defer conn.Close()
 
