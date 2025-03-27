@@ -80,13 +80,13 @@ func TestRepoCreateAccount(t *testing.T) {
 
 func TestRepoChangeBalance(t *testing.T) {
 	ctx := context.Background()
-	err := accountRepo.ChangeBalance(ctx, 1, "WON", 100_000)
+	err := accountRepo.ChangeBalance(ctx, 1, "KRW", 100_000)
 
 	if err != nil {
 		t.Fatalf("deposit balance should success: %s ", err.Error())
 	}
 
-	err = accountRepo.ChangeBalance(ctx, 1, "WON", -1_000_000)
+	err = accountRepo.ChangeBalance(ctx, 1, "KRW", -1_000_000)
 
 	if err == nil || err.Error() != "insufficient balance" {
 		log.Println(err)
@@ -99,7 +99,7 @@ func TestRepoChangeBalance(t *testing.T) {
 		t.Fatal("withdrawal of exceeding balance of other currency should fail with message 'insufficient balance'")
 	}
 
-	err = accountRepo.ChangeBalance(ctx, 1, "WON", -50_000)
+	err = accountRepo.ChangeBalance(ctx, 1, "KRW", -50_000)
 
 	if err != nil {
 		t.Fatal("withdrawal of sufficient amount should success")
@@ -107,7 +107,7 @@ func TestRepoChangeBalance(t *testing.T) {
 }
 
 func TestRepoGetBalance(t *testing.T) {
-	balance, err := accountRepo.GetBalance(context.Background(), 1, "WON")
+	balance, err := accountRepo.GetBalance(context.Background(), 1, "KRW")
 
 	if err != nil {
 		t.Fatal(err)

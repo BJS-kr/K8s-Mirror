@@ -8,7 +8,6 @@ import (
 )
 
 func NewConn(connStr string) *sql.DB {
-
 	db, err := sql.Open("postgres", connStr)
 
 	if err != nil {

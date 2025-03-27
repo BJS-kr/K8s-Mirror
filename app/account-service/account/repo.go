@@ -91,3 +91,14 @@ func (r *AccountRepo) GetCurrencyId(ctx context.Context, currency string) (int, 
 
 	return currencyId, nil
 }
+
+func (r *AccountRepo) GetAccountNameById(ctx context.Context, accountId int, accountName *string) error {
+
+	err := r.conn.QueryRowContext(ctx, "SELECT name FROM accounts WHERE id = $1", accountId).Scan(accountName)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("there's no such account: %s origin: %w", *accountName, err)
+	}
+
+	return nil
+}

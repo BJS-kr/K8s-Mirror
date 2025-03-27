@@ -24,7 +24,7 @@ type MockLoanServiceConnector struct {
 	errorFlag bool
 }
 
-func (c *MockLoanServiceConnector) RequestLoan(ctx context.Context, currency string, amount int) error {
+func (c *MockLoanServiceConnector) RequestLoan(ctx context.Context, accountName, currency string, amount int) error {
 	if c.errorFlag {
 		return connector.ErrRequestLoanDenied
 	}
@@ -32,7 +32,7 @@ func (c *MockLoanServiceConnector) RequestLoan(ctx context.Context, currency str
 	return nil
 }
 
-func (c *MockLoanServiceConnector) ReturnLoan(ctx context.Context, currency string, amount int) error {
+func (c *MockLoanServiceConnector) ReturnLoan(ctx context.Context, accountName, currency string, amount int) error {
 	if c.errorFlag {
 		return connector.ErrReturnLoanDenied
 	}
@@ -113,7 +113,8 @@ func TestChangeBalanceShouldSuccess(t *testing.T) {
 
 	dbMock.ExpectBegin()
 	dbMock.ExpectQuery("SELECT id FROM currencies").WithArgs("USD").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	dbMock.ExpectExec("INSERT INTO balances").WithArgs(1, 1, 100).WillReturnResult(sqlmock.NewResult(1, 1))
+	dbMock.ExpectExec("INSERT INTO balances").WithArgs(changeBalance.AccountId, 1, changeBalance.Amount).WillReturnResult(sqlmock.NewResult(1, 1))
+	dbMock.ExpectQuery("SELECT name FROM accounts").WithArgs(changeBalance.AccountId).WillReturnRows(sqlmock.NewRows([]string{"name"}).AddRow("test_acc"))
 	dbMock.ExpectCommit()
 
 	resp := httptest.NewRecorder()

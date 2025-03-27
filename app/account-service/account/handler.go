@@ -81,15 +81,19 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var accountName string
 	boundTasks := []Nullary{
 		func() error {
 			return h.accountRepo.ChangeBalance(ctx, changeBalance.AccountId, changeBalance.Currency, changeBalance.Amount)
 		},
 		func() error {
+			return h.accountRepo.GetAccountNameById(ctx, changeBalance.AccountId, &accountName)
+		},
+		func() error {
 			if changeBalance.Amount < 0 {
-				return h.loanServiceConnector.ReturnLoan(ctx, changeBalance.Currency, changeBalance.Amount)
+				return h.loanServiceConnector.ReturnLoan(ctx, accountName, changeBalance.Currency, changeBalance.Amount)
 			} else {
-				return h.loanServiceConnector.RequestLoan(ctx, changeBalance.Currency, changeBalance.Amount)
+				return h.loanServiceConnector.RequestLoan(ctx, accountName, changeBalance.Currency, changeBalance.Amount)
 			}
 		},
 	}
@@ -97,7 +101,9 @@ func (h *AccountHandler) changeBalance(w http.ResponseWriter, r *http.Request) {
 	err = runInTx(ctx, h.accountRepo.conn, boundTasks)
 
 	if err != nil {
-		if errors.Is(err, connector.ErrRequestLoanDenied) || errors.Is(err, connector.ErrReturnLoanDenied) {
+		if errors.Is(err, connector.ErrRequestLoanDenied) ||
+			errors.Is(err, connector.ErrReturnLoanDenied) ||
+			errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
