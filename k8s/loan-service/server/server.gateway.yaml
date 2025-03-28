@@ -1,9 +1,9 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: account-service-gateway
+  name: loan-service-gateway
   labels:
-    app: account-service
+    app: loan-service
     role: gateway
 spec:
   gatewayClassName: nginx
@@ -11,18 +11,18 @@ spec:
   - name: http
     port: 80
     protocol: HTTP
-    hostname: "account.example.com"
+    hostname: "loan.example.com"
 ---
 
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: account-service-http
+  name: loan-service-http
   labels:
-    app: account-service
+    app: loan-service
 spec:
   parentRefs:
-  - name: account-service-gateway
+  - name: loan-service-gateway
     sectionName: http
   rules:
   - matches:
@@ -30,5 +30,5 @@ spec:
         type: PathPrefix
         value: /
     backendRefs:
-    - name: account-service-svc
-      port: 8080
+    - name: loan-service-svc
+      port: 8081

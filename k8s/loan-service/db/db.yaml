@@ -1,58 +1,58 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: account-service-db-svc
+  name: loan-service-db-svc
   labels:
-    app: account-service
+    app: loan-service
 spec:
   ports:
-  - port: 5432
-    name: pg-default
+  - port: 3306
+    name: mysql-default
   clusterIP: None # headless
   selector:
-    app: account-service
+    app: loan-service
     role: db
 ---
 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: account-service-db-ss
+  name: loan-service-db-ss
   labels:
-    app: account-service
+    app: loan-service
 spec:
   selector:
     matchLabels:
-      app: account-service
-  serviceName: account-service-db-svc
+      app: loan-service
+  serviceName: loan-service-db-svc
   replicas: 1 # default
   minReadySeconds: 10 # default is 0
   template:
     metadata:
       labels:
-        app: account-service
+        app: loan-service
         role: db 
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: pg
-        image: postgres:17.4-alpine
+      - name: mysql
+        image: mysql:9.2
         ports:
-        - containerPort: 5432
-          name: pg-default
+        - containerPort: 3306
+          name: mysql-default
         volumeMounts:
-        - name: account-service-db-data
-          mountPath: /var/lib/postgresql/data
+        - name: loan-service-db-data
+          mountPath: /var/lib/mysql
         env:
-        - name: POSTGRES_PASSWORD
+        - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: account-service-db-secret
+              name: loan-service-db-secret
               key: db-password
               optional: false
   volumeClaimTemplates:
   - metadata:
-      name: account-service-db-data
+      name: loan-service-db-data
     spec:
       accessModes:
       - ReadWriteOncePod

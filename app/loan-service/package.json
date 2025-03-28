@@ -1,0 +1,25 @@
+{
+  "name": "loan-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --import tsx --test loan/repository.test.ts",
+    "build": "tsc",
+    "dev": "NODE_ENV=development tsx main.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.14.0",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "testcontainers": "^10.23.0",
+    "tsx": "^4.19.3"
+  }
+}

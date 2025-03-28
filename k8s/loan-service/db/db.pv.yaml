@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: account-service-pv
+  name: loan-service-pv
 spec:
   capacity:
     storage: 1Gi
@@ -15,7 +15,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /mnt/disks/vol1 # 타겟 노드안에 디렉토리 생성해놔야 함. docker desktop으로 cluster를 구성했기 때문에, docker exec으로 접속함. wsl2 터미널에서는 docker exec이 안되고, powershell등에서 실행해야함
+    path: /mnt/disks/vol2 # 타겟 노드안에 디렉토리 생성해놔야 함. docker desktop으로 cluster를 구성했기 때문에, docker exec으로 접속함. wsl2 터미널에서는 docker exec이 안되고, powershell등에서 실행해야함
   nodeAffinity:
     required:
       nodeSelectorTerms:
