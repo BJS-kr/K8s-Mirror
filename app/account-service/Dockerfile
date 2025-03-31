@@ -11,7 +11,6 @@ FROM busybox
 
 WORKDIR /app
 
-COPY ./.env .
 COPY --from=builder /app/account_service .
 
 CMD ["./account_service"]

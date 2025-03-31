@@ -48,6 +48,11 @@ spec:
       - image: iron2ron/loan-service:latest
         imagePullPolicy: Always
         name: loan-service
+        envFrom:
+          - configMapRef:
+              name: loan-service-server-config
+          - secretRef:
+              name: loan-service-server-secret
         ports:
         - containerPort: 8081
         resources:

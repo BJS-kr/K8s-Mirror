@@ -1,0 +1,10 @@
+# secret에 포함되어야 할 목록도 존재하나 예시 프로젝트이므로 모두 configmap으로 처리함
+apiVersion: v1
+data:
+  DB_HOST: account-service-db-svc
+  HTTP_PORT: "8080"
+  LOAN_SERVICE_ADDR: http://loan-service-svc:8081
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: account-service-server-config
