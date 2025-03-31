@@ -33,14 +33,6 @@ sh cluster.up.sh
 <img src="flow.jpg" alt="architecture" width="500"> 
 </img>
 
-### File naming
-
-1. 공식 축약어를 파일 이름에 사용. svc, pv 등  
-2. 공식 축약어가 없는 resource의 경우 소문자로 풀 네임: statefulset, networkpolicy 등  
-3. 계층적 구조일 경우 . 으로 계층 구분. 예) server.gateway.svc.yaml 등  
-4. 위계가 아닌 경우 - 으로 단어 구분. 예) account-service-secret.yaml 등  
-
-
 # 개발 환경
 Kind(Kubernetes v1.32.2) 3 nodes  
 Windows docker desktop 4.0.0(Docker 28.0.1)  
