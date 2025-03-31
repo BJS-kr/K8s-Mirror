@@ -4,3 +4,8 @@ buildpush.sh
 node_modules
 dist
 memo.md
+.terraform*
+*.tfvars
+*.tfstate
+plan.*
+*.backup
