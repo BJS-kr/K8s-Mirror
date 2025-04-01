@@ -1,8 +1,3 @@
-variable "db_storage_size" {
-  description = "Storage size for account service database"
-  type        = string
-}
-
 variable "db_port" {
   description = "Database port for account service"
   type        = string

@@ -1,12 +1,3 @@
-resource "kubernetes_secret" "account_service_db_secret" {
-  metadata {
-    name = "account-service-db-secret"
-  }
-  data = {
-    "db-password" = var.db_password
-  }
-}
-
 resource "kubernetes_service" "account_service_db_svc" {
   metadata {
     name = "account-service-db-svc"
@@ -28,7 +19,6 @@ resource "kubernetes_service" "account_service_db_svc" {
     }
   }
 }
-
 
 resource "kubernetes_stateful_set" "account_service_db_ss" {
   depends_on = [ 
@@ -107,42 +97,3 @@ resource "kubernetes_stateful_set" "account_service_db_ss" {
   }
 }
 
-resource "kubernetes_network_policy" "account_service_db_network_policy" {
-  metadata {
-    name = "account-service-db-network-policy"
-  }
-  spec {
-    pod_selector {
-      match_labels = {
-        app = "account-service"
-        role = "db"
-      }
-    }
-    policy_types = ["Ingress", "Egress"]
-    ingress {
-      from {
-        pod_selector {
-          match_labels = {
-            app = "account-service"
-            role = "server"
-          }
-        }
-      }
-      ports {
-        port = var.db_port
-        protocol = "TCP"
-      }
-    }
-
-    egress {
-      to {
-        pod_selector {
-          match_labels = {
-            app = "account-service"
-            role = "server"
-          }
-        }
-      }
-    }
-  }
-}
