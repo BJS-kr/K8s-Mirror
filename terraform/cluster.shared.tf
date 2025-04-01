@@ -1,5 +1,3 @@
-
-
 resource "kubernetes_storage_class" "ebs_sc" {
   metadata {
     name = "ebs-sc"
