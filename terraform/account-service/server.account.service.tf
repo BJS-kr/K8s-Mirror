@@ -3,9 +3,9 @@ resource "kubernetes_config_map" "account_service_server_config" {
     name = "account-service-server-config"
   }
   data = {
-    DB_HOST = var.account_db_host
-    HTTP_PORT = var.account_service_http_port
-    LOAN_SERVICE_ADDR = "http://loan-service-svc:8081"
+    DB_HOST = var.db_host
+    HTTP_PORT = var.service_http_port
+    LOAN_SERVICE_ADDR = var.loan_service_address
   }
 }
 
@@ -14,10 +14,10 @@ resource "kubernetes_secret" "account_service_server_secret" {
     name = "account-service-server-secret"
   }
   data = {
-    DB_NAME = var.account_db_name
-    DB_PASSWORD = var.account_db_password
-    DB_PORT = var.account_db_port
-    DB_USER = var.account_db_user
+    DB_NAME = var.db_name
+    DB_PASSWORD = var.db_password
+    DB_PORT = var.db_port
+    DB_USER = var.db_user
   }
 }
 
@@ -31,7 +31,7 @@ resource "kubernetes_service" "account_service_svc" {
   spec {
     port {
       name = "8080-8080"
-      port = var.account_service_http_port
+      port = var.service_http_port
     }
     selector = {
       app = "account-service"
@@ -55,7 +55,7 @@ resource "kubernetes_deployment" "account_service_depl" {
     }
   }
   spec {
-    replicas = var.account_service_replicas
+    replicas = var.service_replicas
     selector {
       match_labels = {
         app = "account-service"
@@ -75,7 +75,7 @@ resource "kubernetes_deployment" "account_service_depl" {
           image_pull_policy = "Always"
           name = "account-service"
           port {
-            container_port = var.account_service_http_port
+            container_port = var.service_http_port
           }
           env_from {
             config_map_ref {
@@ -100,7 +100,7 @@ resource "kubernetes_deployment" "account_service_depl" {
           liveness_probe {
             http_get {
               path = "/health"
-              port = var.account_service_http_port
+              port = var.service_http_port
             }
             initial_delay_seconds = 5
             period_seconds = 3
@@ -116,14 +116,14 @@ resource "kubernetes_horizontal_pod_autoscaler" "account_service_hpa" {
     name = "account-service-hpa"
   }
   spec {
-    max_replicas = var.account_service_max_replicas
-    min_replicas = var.account_service_min_replicas 
+    max_replicas = var.service_max_replicas
+    min_replicas = var.service_min_replicas 
     scale_target_ref {
       api_version = "apps/v1"
       kind = "Deployment"
       name = "account-service-depl"
     }
-    target_cpu_utilization_percentage = var.account_service_target_cpu_utilization_percentage
+    target_cpu_utilization_percentage = var.service_target_cpu_utilization_percentage
   }
 }
 
@@ -149,7 +149,7 @@ resource "kubernetes_ingress_v1" "account_service_ingress" {
             service {
               name = "account-service-svc"
               port {
-                number = var.account_service_http_port
+                number = var.service_http_port
               }
             }
           }

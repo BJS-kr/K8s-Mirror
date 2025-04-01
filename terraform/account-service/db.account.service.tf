@@ -3,7 +3,7 @@ resource "kubernetes_secret" "account_service_db_secret" {
     name = "account-service-db-secret"
   }
   data = {
-    "db-password" = var.account_db_password
+    "db-password" = var.db_password
   }
 }
 
@@ -18,7 +18,7 @@ resource "kubernetes_service" "account_service_db_svc" {
 
   spec {
     port {
-      port = var.account_db_port
+      port = var.db_port
       name = "pg-default"
     } 
     cluster_ip = "None"
@@ -65,7 +65,7 @@ resource "kubernetes_stateful_set" "account_service_db_ss" {
           name = "pg"
           image = "postgres:17.4-alpine"
           port {
-            container_port = var.account_db_port
+            container_port = var.db_port
             name = "pg-default"
           }
           volume_mount {
@@ -98,7 +98,7 @@ resource "kubernetes_stateful_set" "account_service_db_ss" {
         access_modes = ["ReadWriteOnce"]
         resources {
           requests = {
-            storage = var.account_db_storage_size
+            storage = var.db_storage_size
           }
         }
         storage_class_name = "ebs-sc"
@@ -129,7 +129,7 @@ resource "kubernetes_network_policy" "account_service_db_network_policy" {
         }
       }
       ports {
-        port = var.account_db_port
+        port = var.db_port
         protocol = "TCP"
       }
     }
