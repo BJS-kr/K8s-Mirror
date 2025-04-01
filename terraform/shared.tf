@@ -1,15 +1,3 @@
-# Storage Class
-resource "kubernetes_storage_class" "local_storage" {
-  metadata {
-    name = "local-storage"
-  }
-  storage_provisioner    = "kubernetes.io/no-provisioner"
-  reclaim_policy         = "Retain"
-  allow_volume_expansion = true
-  mount_options          = ["rw"]
-  volume_binding_mode    = "WaitForFirstConsumer"
-}
-
 # NGINX Gateway Fabric
 # resource "helm_release" "nginx_gateway_fabric" {
 #   name             = "nginx-gateway-fabric"
@@ -142,17 +130,23 @@ resource "kubernetes_storage_class" "local_storage" {
 #   }
 # }
 
-# # Metrics Server
-# resource "helm_release" "metrics_server" {
-#   name             = "metrics-server"
-#   repository       = "https://kubernetes-sigs.github.io/metrics-server/"
-#   chart            = "metrics-server"
-#   version          = "6.3.8"
-#   namespace        = "kube-system"
-#   create_namespace = false
-
-#   set {
-#     name  = "args"
-#     value = jsonencode(["--kubelet-insecure-tls"])
-#   }
-# } 
+resource "kubernetes_storage_class" "ebs_sc" {
+  metadata {
+    name = "ebs-sc"
+  }
+  storage_provisioner = "ebs.csi.aws.com"
+  parameters = {
+    type = "gp3"
+    encrypted = "false"
+    fsType = "ext4"
+  }
+  volume_binding_mode = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+  reclaim_policy = "Retain"
+  allowed_topologies {
+    match_label_expressions {
+      key = "topology.ebs.csi.aws.com/zone"
+      values = var.vpc_azs
+    }
+  }
+}

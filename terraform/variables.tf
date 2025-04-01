@@ -123,6 +123,29 @@ variable "account_db_password" {
   sensitive   = true
 }
 
+variable "account_db_host" {
+  description = "Database host for account service"
+  type        = string
+  sensitive = true
+}
+
+variable "account_db_name" {
+  description = "Database name for account service"
+  type        = string
+  sensitive = true
+}
+
+variable "account_db_port" {
+  description = "Database port for account service"
+  type        = string
+  sensitive = true
+}
+
+variable "account_service_http_port" {
+  description = "HTTP port for account service"
+  type        = string
+}
+
 variable "loan_db_password" {
   description = "Database password for loan service"
   type        = string
@@ -139,4 +162,9 @@ variable "aws_secret_key" {
   description = "aws secret key"
   type        = string
   sensitive   = true
+}
+
+variable "admin_user_arn" {
+  description = "admin user arn"
+  type        = string
 }

@@ -1,3 +1,26 @@
+resource "kubernetes_config_map" "account_service_server_config" {
+  metadata {
+    name = "account-service-server-config"
+  }
+  data = {
+    DB_HOST = var.account_db_host
+    HTTP_PORT = var.account_service_http_port
+    LOAN_SERVICE_ADDR = "http://loan-service-svc:8081"
+  }
+}
+
+resource "kubernetes_secret" "account_service_server_secret" {
+  metadata {
+    name = "account-service-server-secret"
+  }
+  data = {
+    DB_NAME = var.account_db_name
+    DB_PASSWORD = var.account_db_password
+    DB_PORT = var.account_db_port
+    DB_USER = var.account_db_user
+  }
+}
+
 resource "kubernetes_service" "account_service_svc" {
   metadata {
     name = "account-service-svc"
@@ -8,7 +31,7 @@ resource "kubernetes_service" "account_service_svc" {
   spec {
     port {
       name = "8080-8080"
-      port = 8080
+      port = var.account_service_http_port
     }
     selector = {
       app = "account-service"
@@ -19,6 +42,12 @@ resource "kubernetes_service" "account_service_svc" {
 } 
 
 resource "kubernetes_deployment" "account_service_depl" {
+  depends_on = [ 
+    kubernetes_config_map.account_service_server_config, 
+    kubernetes_secret.account_service_server_secret,
+    kubernetes_stateful_set.account_service_db_ss,
+    kubernetes_service.account_service_svc 
+  ]
   metadata {
     name = "account-service-depl"
     labels = {
@@ -44,7 +73,17 @@ resource "kubernetes_deployment" "account_service_depl" {
           image_pull_policy = "Always"
           name = "account-service"
           port {
-            container_port = 8080
+            container_port = var.account_service_http_port
+          }
+          env_from {
+            config_map_ref {
+              name = "account-service-server-config"
+            }
+          }
+          env_from {
+            secret_ref {
+              name = "account-service-server-secret"
+            }
           }
           resources {
             requests = {
@@ -59,7 +98,7 @@ resource "kubernetes_deployment" "account_service_depl" {
           liveness_probe {
             http_get {
               path = "/health"
-              port = 8080
+              port = var.account_service_http_port
             }
             initial_delay_seconds = 5
             period_seconds = 3

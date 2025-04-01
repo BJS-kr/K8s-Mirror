@@ -7,40 +7,20 @@ resource "kubernetes_secret" "account_service_db_secret" {
   }
 }
 
-resource "kubernetes_persistent_volume" "account_service_db_pv" {
-  metadata {
-    name = "account-service-pv"
-  }
-  spec {
-    capacity = {
-      storage = var.account_db_storage_size
-    }
-    volume_mode = "Filesystem"
-    access_modes       = ["ReadWriteOncePod"]
-    persistent_volume_reclaim_policy = "Retain"
-    storage_class_name = kubernetes_storage_class.local_storage.metadata[0].name
-    persistent_volume_source {
-      host_path {
-        path = "/mnt/disks/vol1"
-        type = "DirectoryOrCreate"
-      }
-    }
-  }
-}
-
 resource "kubernetes_service" "account_service_db_svc" {
   metadata {
     name = "account-service-db-svc"
     labels = {
       app = "account-service"
+      role = "db"
     }
   }
 
   spec {
     port {
-      port = 5432
+      port = var.account_db_port
       name = "pg-default"
-    }
+    } 
     cluster_ip = "None"
     selector = {
       app = "account-service"
@@ -49,7 +29,13 @@ resource "kubernetes_service" "account_service_db_svc" {
   }
 }
 
+
 resource "kubernetes_stateful_set" "account_service_db_ss" {
+  depends_on = [ 
+    kubernetes_secret.account_service_db_secret, 
+    kubernetes_service.account_service_db_svc,
+    kubernetes_storage_class.ebs_sc
+  ]
   metadata {
     name = "account-service-db-ss"
     labels = {
@@ -79,7 +65,7 @@ resource "kubernetes_stateful_set" "account_service_db_ss" {
           name = "pg"
           image = "postgres:17.4-alpine"
           port {
-            container_port = 5432
+            container_port = var.account_db_port
             name = "pg-default"
           }
           volume_mount {
@@ -96,6 +82,10 @@ resource "kubernetes_stateful_set" "account_service_db_ss" {
               }
             }
           }
+          env {
+            name = "PGDATA"
+            value = "/var/lib/postgresql/data/pgdata"
+          }
         }
       }
     }
@@ -103,14 +93,15 @@ resource "kubernetes_stateful_set" "account_service_db_ss" {
       metadata {
         name = "account-service-db-data"
       }
+      
       spec {
-        access_modes = ["ReadWriteOncePod"]
-        storage_class_name = "local-storage"
+        access_modes = ["ReadWriteOnce"]
         resources {
           requests = {
             storage = var.account_db_storage_size
           }
         }
+        storage_class_name = "ebs-sc"
       }
     }
   }

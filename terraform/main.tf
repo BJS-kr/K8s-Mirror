@@ -20,7 +20,7 @@ provider "aws" {
 }
 
 provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
+  host                   =   module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
@@ -52,7 +52,26 @@ module "eks" {
   subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
 
   cluster_endpoint_public_access = true
+  enable_cluster_creator_admin_permissions = true
+  create_node_security_group = false
 
+  cluster_addons =  {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent = true
+    }
+    metrics-server = {
+      most_recent = true
+    }
+  }
   eks_managed_node_groups = {
     private = {
       min_size     = var.node_group_min_size
@@ -67,22 +86,25 @@ module "eks" {
       labels = {
         "network" =  "private"
       }
-    }
-
-    public = {
-      min_size     = var.node_group_min_size
-      max_size     = var.node_group_max_size
-      desired_size = var.node_group_desired_size
-
-      instance_types = var.node_group_instance_types
-      capacity_type  = var.node_group_capacity_type
-
-      subnet_ids = module.vpc.public_subnets
-
-      labels = {
-        "network" = "public"
+      iam_role_additional_policies = {
+        AmazonEKS_EBS_CSI_DriverRole  = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
       }
     }
+
+    # public = {
+    #   min_size     = var.node_group_min_size
+    #   max_size     = var.node_group_max_size
+    #   desired_size = var.node_group_desired_size
+
+    #   instance_types = var.node_group_instance_types
+    #   capacity_type  = var.node_group_capacity_type
+
+    #   subnet_ids = module.vpc.public_subnets
+
+    #   labels = {
+    #     "network" = "public"
+    #   }
+    # }
   }
 
   tags = {
