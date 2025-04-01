@@ -59,12 +59,14 @@ resource "kubernetes_deployment" "account_service_depl" {
     selector {
       match_labels = {
         app = "account-service"
+        role = "server"
       }
     }
     template {
       metadata {
         labels = {
           app = "account-service"
+          role = "server"
         }
       }
       spec {
@@ -108,3 +110,54 @@ resource "kubernetes_deployment" "account_service_depl" {
     }
   }
 }
+
+resource "kubernetes_horizontal_pod_autoscaler" "account_service_hpa" {
+  metadata {
+    name = "account-service-hpa"
+  }
+  spec {
+    max_replicas = var.account_service_max_replicas
+    min_replicas = var.account_service_min_replicas 
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind = "Deployment"
+      name = "account-service-depl"
+    }
+    target_cpu_utilization_percentage = var.account_service_target_cpu_utilization_percentage
+  }
+}
+
+resource "kubernetes_ingress_v1" "account_service_ingress" {
+  metadata {
+    name = "account-service-ingress"
+    annotations = {
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/$2"
+    }
+    labels = {
+      "app" = "account-service"
+    }
+  }
+  spec {
+    ingress_class_name = "nginx"
+    rule {
+      
+      http {
+        path {
+          path = "/account(/|$)(.*)"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "account-service-svc"
+              port {
+                number = var.account_service_http_port
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+

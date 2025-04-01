@@ -168,3 +168,19 @@ variable "admin_user_arn" {
   description = "admin user arn"
   type        = string
 }
+
+variable "account_service_max_replicas" {
+  description = "Maximum number of replicas for account service"
+  type        = number
+}
+
+variable "account_service_min_replicas" {
+  description = "Minimum number of replicas for account service"
+  type        = number
+}
+
+
+variable "account_service_target_cpu_utilization_percentage" {
+  description = "Target CPU utilization percentage for account service"
+  type        = number
+}
