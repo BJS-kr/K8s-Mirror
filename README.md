@@ -9,7 +9,7 @@ K8s 클러스터와 http 서버 두 개가 포함되어있습니다.
 3. terraform(terraform/): tf 리소스 정의. EKS 배포용
 
 ## 탐색
-각 root(app/, k8s/, terraform/)은 하위에 서비스 디렉토리(<service-name>-service)들로 구성되어 있습니다.
+각 root(app/, k8s/, terraform/)은 하위에 서비스 디렉토리(<service-name>-service)들로 구성되어 있습니다.  
 각 서비스 디렉토리의 하위는 서버 소스(server/)와 데이터베이스 소스(db/)로 구성되어 있습니다.
 
 ## 서비스
@@ -23,8 +23,8 @@ K8s 클러스터와 http 서버 두 개가 포함되어있습니다.
 
 ### 실행
 #### local cluster
-스크립트(k8s/cluster.up.sh)로 실행합니다.
-Docker desktop + Kind 클러스터 사용을 가정한 스크립트입니다.
+스크립트(k8s/cluster.up.sh)로 실행합니다.  
+Docker desktop + Kind 클러스터 사용을 가정한 스크립트입니다.  
 다른 환경을 사용하고 계시다면 스크립트를 참조해 조정해주세요.
 
 ```bash
