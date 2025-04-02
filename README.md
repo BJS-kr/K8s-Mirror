@@ -41,6 +41,8 @@ terraform apply --var-file=demo.tfvars
 
 ### 서비스의 구성
 하나의 서비스는 아래와 같이 동작하며, 각 서비스는 같은 구조를 따릅니다.
+EKS에서는 Gateway API대신 Ingress를 사용합니다. tf에 이미 정의된 리소스들을 사용하기 위해서 입니다.
+storage class, ingress controller 등은 공동 자원입니다.
 
 <br />
 <img src="flow.jpg" alt="architecture" width="500"> 
