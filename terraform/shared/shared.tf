@@ -39,6 +39,4 @@ module "nginx-controller" {
       type  = "string"
     }
   ]
-
-  depends_on = [module.eks]
 }

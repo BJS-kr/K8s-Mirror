@@ -64,3 +64,8 @@ variable "account_service_loan_service_address" {
   description = "Address of the loan service"
   type        = string
 }
+
+variable "account_service_server_image" {
+  description = "Image for account service server"
+  type        = string
+}

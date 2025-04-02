@@ -14,3 +14,8 @@ variable "db_storage_size" {
   description = "Storage size for account service database"
   type        = string
 }
+
+variable "storage_class" {
+  description = "Storage class for account service database"
+  type        = any
+}

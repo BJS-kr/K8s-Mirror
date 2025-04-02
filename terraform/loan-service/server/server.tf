@@ -1,48 +1,48 @@
-resource "kubernetes_service" "account_service_svc" {
+resource "kubernetes_service" "loan_service_svc" {
   metadata {
-    name = "account-service-svc"
+    name = "loan-service-svc"
     labels = {
-      app = "account-service"
+      app = "loan-service"
     }
   }
   spec {
     port {
-      name = "account-service-port"
+      name = "loan-service-port"
       port = var.service_http_port
     }
     selector = {
-      app = "account-service"
+      app = "loan-service"
       role = "server"
     }
     type = "ClusterIP"
   }
 } 
 
-resource "kubernetes_deployment" "account_service_depl" {
+resource "kubernetes_deployment" "loan_service_depl" {
   depends_on = [ 
-    kubernetes_config_map.account_service_server_config, 
-    kubernetes_secret.account_service_server_secret,
+    kubernetes_config_map.loan_service_server_config, 
+    kubernetes_secret.loan_service_server_secret,
     module.db,
-    kubernetes_service.account_service_svc 
+    kubernetes_service.loan_service_svc 
   ]
   metadata {
-    name = "account-service-depl"
+    name = "loan-service-depl"
     labels = {
-      app = "account-service"
+      app = "loan-service"
     }
   }
   spec {
     replicas = var.service_replicas
     selector {
       match_labels = {
-        app = "account-service"
+        app = "loan-service"
         role = "server"
       }
     }
     template {
       metadata {
         labels = {
-          app = "account-service"
+          app = "loan-service"
           role = "server"
         }
       }
@@ -50,28 +50,28 @@ resource "kubernetes_deployment" "account_service_depl" {
         container {
           image = var.service_server_image
           image_pull_policy = "Always"
-          name = "account-service"
+          name = "loan-service"
           port {
             container_port = var.service_http_port
           }
           env_from {
             config_map_ref {
-              name = "account-service-server-config"
+              name = "loan-service-server-config"
             }
           }
           env_from {
             secret_ref {
-              name = "account-service-server-secret"
+              name = "loan-service-server-secret"
             }
           }
           resources {
             requests = {
-              memory = "32Mi"
-              cpu = "200m"
+              memory = "64Mi"
+              cpu = "300m"
             }
             limits = {
-              memory = "64Mi"
-              cpu = "400m"
+              memory = "128Mi"
+              cpu = "500m"
             }
           }
           liveness_probe {

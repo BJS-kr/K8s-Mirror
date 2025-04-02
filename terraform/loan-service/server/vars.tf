@@ -1,11 +1,11 @@
-variable "db_password" {
-  description = "Database password for loan service"
-  type        = string
-  sensitive   = true
-}
-
 variable "db_port" {
   description = "Database port for loan service"
+  type        = string
+  sensitive = true
+}
+
+variable "db_host" {
+  description = "Database host for loan service"
   type        = string
   sensitive = true
 }
@@ -15,10 +15,10 @@ variable "db_storage_size" {
   type        = string
 }
 
-variable "db_host" {
-  description = "Database host for loan service"
+variable "db_password" {
+  description = "Database password for loan service"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "db_user" {
@@ -41,7 +41,6 @@ variable "service_replicas" {
   description = "Number of replicas for loan service"
   type        = number
 }
-
 
 variable "service_max_replicas" {
   description = "Maximum number of replicas for loan service"
