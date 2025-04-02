@@ -5,7 +5,7 @@ node_modules
 dist
 memo.md
 .terraform*
-*.tfvars
+dev.tfvars
 *.tfstate
 plan.*
 *.backup
